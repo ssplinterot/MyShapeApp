@@ -1,0 +1,49 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:MyShapeApp"
+        x:Class="MyShapeApp.MainWindow"
+        Title="Гео-Редактор" Width="950" Height="700">
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="Создать">
+                <MenuItem Header="Прямоугольник" Click="AddRect"/>
+                <MenuItem Header="Треугольник" Click="AddTriangle"/>
+                <MenuItem Header="Круг" Click="AddCircle"/>
+            </MenuItem>
+        </Menu>
+
+        <Border DockPanel.Dock="Left" Width="260" Background="#2D2D2D" Padding="15">
+            <StackPanel Spacing="10">
+                <TextBlock Text="ИНСТРУМЕНТЫ" Foreground="White" FontWeight="Bold"/>
+                <UniformGrid Columns="5" Height="40">
+                    <Button Background="Red" Width="35" Height="35" Click="SetColor"/>
+                    <Button Background="Blue" Width="35" Height="35" Click="SetColor"/>
+                    <Button Background="Green" Width="35" Height="35" Click="SetColor"/>
+                    <Button Background="Yellow" Width="35" Height="35" Click="SetColor"/>
+                    <Button Background="Black" Width="35" Height="35" Click="SetColor"/>
+                </UniformGrid>
+                <Rectangle x:Name="CurrentColorDisplay" Fill="Red" Height="5" Margin="0,5"/>
+                <NumericUpDown x:Name="ThicknessControl" Value="2" Minimum="1" Maximum="30"/>
+                <Button Content="ЗАЛИТЬ ФИГУРУ" Click="OnFillClick" HorizontalAlignment="Stretch"/>
+
+                <Separator Margin="0,10" Background="#555555"/>
+                
+                <TextBlock Text="ДАННЫЕ ЯКОРЯ" Foreground="White" FontWeight="Bold"/>
+                <TextBlock x:Name="TxtRelCenter" Text="Относительно центра: 0, 0" Foreground="#AAAAAA" FontSize="11"/>
+                <TextBlock x:Name="TxtTopDist" Text="До верхней границы: 0" Foreground="#AAAAAA" FontSize="11"/>
+                <TextBlock x:Name="TxtBottomDist" Text="До нижней границы: 0" Foreground="#AAAAAA" FontSize="11"/>
+
+                <TextBlock Text="Координаты (X, Y):" Foreground="White" Margin="0,5,0,0"/>
+                <StackPanel Orientation="Horizontal" Spacing="5">
+                    <NumericUpDown x:Name="CoordX" Value="0" Width="100" ValueChanged="OnCoordChanged"/>
+                    <NumericUpDown x:Name="CoordY" Value="0" Width="100" ValueChanged="OnCoordChanged"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <Border Background="White">
+            <local:MyDrawingCanvas x:Name="MyCanvas" 
+                PointerPressed="OnDown" PointerMoved="OnMove" PointerReleased="OnUp"/>
+        </Border>
+    </DockPanel>
+</Window>
