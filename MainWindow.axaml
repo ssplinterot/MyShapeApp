@@ -8,7 +8,9 @@
             <MenuItem Header="Создать">
                 <MenuItem Header="Прямоугольник" Click="AddRect"/>
                 <MenuItem Header="Треугольник" Click="AddTriangle"/>
+                <MenuItem Header="Трапеция" Click="AddTrapezoid"/>
                 <MenuItem Header="Круг" Click="AddCircle"/>
+                <MenuItem Header="Пятиугольник" Click="AddPentagon"/>
             </MenuItem>
         </Menu>
 
@@ -33,7 +35,12 @@
                 <TextBlock x:Name="TxtTopDist" Text="До верхней границы: 0" Foreground="#AAAAAA" FontSize="11"/>
                 <TextBlock x:Name="TxtBottomDist" Text="До нижней границы: 0" Foreground="#AAAAAA" FontSize="11"/>
 
-                <TextBlock Text="Координаты (X, Y):" Foreground="White" Margin="0,15,0,5"/>
+                <TextBlock Text="РАССТОЯНИЯ ОТ УГЛОВ:" Foreground="White" FontWeight="Bold" Margin="0,10,0,0"/>
+        <ScrollViewer Height="80">
+            <TextBlock x:Name="TxtVerticesDist" Text="Нет данных" Foreground="#00FF00" FontSize="11" TextWrapping="Wrap"/>
+        </ScrollViewer>
+
+                <TextBlock Text="Координаты якоря(X, Y):" Foreground="White" Margin="0,15,0,5"/>
 <StackPanel Orientation="Vertical" Spacing="10">
     <NumericUpDown x:Name="CoordX" 
                    Value="0" 

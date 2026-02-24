@@ -37,20 +37,34 @@ public partial class MainWindow : Window
     }
 
     private void UpdateCoordDisplay() {
-        if (_activeShape != null) {
-            _isUpdatingCoords = true;
-            CoordX.Value = (decimal)Math.Round(_activeShape.Anchor.X);
-            CoordY.Value = (decimal)Math.Round(_activeShape.Anchor.Y);
-            
-            // Расчет ваших новых свойств
-            var rel = _activeShape.CenterRelativeToAnchor;
-            TxtRelCenter.Text = $"Относ. центра: X:{Math.Round(rel.X)} Y:{Math.Round(rel.Y)}";
-            TxtTopDist.Text = $"Верхняя гр. до якоря: {Math.Round(_activeShape.DistanceTopToAnchor)}";
-            TxtBottomDist.Text = $"Нижняя гр. до якоря: {Math.Round(_activeShape.DistanceBottomToAnchor)}";
-            
-            _isUpdatingCoords = false;
+    if (_activeShape != null) {
+        _isUpdatingCoords = true;
+        
+        // Обновляем числовые поля (теперь они большие и вертикальные)
+        CoordX.Value = (decimal)Math.Round(_activeShape.Anchor.X);
+        CoordY.Value = (decimal)Math.Round(_activeShape.Anchor.Y);
+        
+        // Обновляем базовые текстовые данные
+        var rel = _activeShape.CenterRelativeToAnchor;
+        TxtRelCenter.Text = $"Относительно центра: X:{Math.Round(rel.X)} Y:{Math.Round(rel.Y)}";
+        TxtTopDist.Text = $"До верхней границы: {Math.Round(_activeShape.DistanceTopToAnchor)}";
+        TxtBottomDist.Text = $"До нижней границы: {Math.Round(_activeShape.DistanceBottomToAnchor)}";
+
+        // НОВЫЙ БЛОК: Вывод расстояний до всех углов
+        var dists = _activeShape.DistancesFromVerticesToAnchor;
+        string info = "";
+        
+        for (int i = 0; i < dists.Count; i++) {
+            // Форматируем строку: Угол 1: [X, Y]
+            info += $"Угол {i + 1}: X:{Math.Round(dists[i].X)} Y:{Math.Round(dists[i].Y)}\n";
         }
+        
+        // Записываем результат в новое поле в XAML
+        TxtVerticesDist.Text = info;
+        
+        _isUpdatingCoords = false;
     }
+}
 
     private void OnCoordChanged(object? sender, NumericUpDownValueChangedEventArgs e) {
         if (!_isUpdatingCoords && _activeShape != null) {

@@ -15,10 +15,10 @@ public abstract class BaseShape
     public Color? FillColor { get; set; } = null;
     public bool IsSelected { get; set; } = false;
 
-    
-    
+    // ИСПРАВЛЕНО: Список расстояний от всех углов до якоря
+    public List<Vector> DistancesFromVerticesToAnchor => 
+        GetVertices().Select(v => (Vector)(v - Anchor)).ToList();
 
-    // --- Ваши новые свойства ---
     public Vector CenterRelativeToAnchor => Center - Anchor;
     public double DistanceTopToAnchor => Anchor.Y - GetVertices().Min(v => v.Y);
     public double DistanceBottomToAnchor => GetVertices().Max(v => v.Y) - Anchor.Y;
@@ -27,8 +27,6 @@ public abstract class BaseShape
     public abstract Point[] GetVertices();
     public abstract void Draw(DrawingContext context);
     public abstract bool IsHit(Point point);
-
-    
 
     public bool IsAnchorHit(Point p) => 
         Math.Sqrt(Math.Pow(p.X - Anchor.X, 2) + Math.Pow(p.Y - Anchor.Y, 2)) < 15;
@@ -71,32 +69,31 @@ public abstract class BaseShape
     }
 
     protected void DrawPolygonWithMiter(DrawingContext context, Point[] vertices)
-{
-    int n = vertices.Length;
-    for (int i = 0; i < n; i++)
     {
-        int prev = (i + n - 1) % n;
-        int next = (i + 1) % n;
-        int nnext = (i + 2) % n;
-
-        // Берем толщину текущей стороны Thicknesses[i] и соседних для расчета стыков
-        Point outStart = GetOffsetPoint(vertices[prev], vertices[i], vertices[next], Thicknesses[prev], Thicknesses[i], true);
-        Point outEnd = GetOffsetPoint(vertices[i], vertices[next], vertices[nnext], Thicknesses[i], Thicknesses[next], true);
-        Point inStart = GetOffsetPoint(vertices[prev], vertices[i], vertices[next], Thicknesses[prev], Thicknesses[i], false);
-        Point inEnd = GetOffsetPoint(vertices[i], vertices[next], vertices[nnext], Thicknesses[i], Thicknesses[next], false);
-
-        var path = new StreamGeometry();
-        using (var ctx = path.Open())
+        int n = vertices.Length;
+        for (int i = 0; i < n; i++)
         {
-            ctx.BeginFigure(outStart, true);
-            ctx.LineTo(outEnd); 
-            ctx.LineTo(inEnd); 
-            ctx.LineTo(inStart);
-            ctx.EndFigure(true);
+            int prev = (i + n - 1) % n;
+            int next = (i + 1) % n;
+            int nnext = (i + 2) % n;
+
+            Point outStart = GetOffsetPoint(vertices[prev], vertices[i], vertices[next], Thicknesses[prev], Thicknesses[i], true);
+            Point outEnd = GetOffsetPoint(vertices[i], vertices[next], vertices[nnext], Thicknesses[i], Thicknesses[next], true);
+            Point inStart = GetOffsetPoint(vertices[prev], vertices[i], vertices[next], Thicknesses[prev], Thicknesses[i], false);
+            Point inEnd = GetOffsetPoint(vertices[i], vertices[next], vertices[nnext], Thicknesses[i], Thicknesses[next], false);
+
+            var path = new StreamGeometry();
+            using (var ctx = path.Open())
+            {
+                ctx.BeginFigure(outStart, true);
+                ctx.LineTo(outEnd); 
+                ctx.LineTo(inEnd); 
+                ctx.LineTo(inStart);
+                ctx.EndFigure(true);
+            }
+            context.DrawGeometry(new SolidColorBrush(SideColors[i]), null, path);
         }
-        context.DrawGeometry(new SolidColorBrush(SideColors[i]), null, path);
     }
-}
 
     private Point GetOffsetPoint(Point pPrev, Point pCurr, Point pNext, double thickPrev, double thickCurr, bool outer)
     {
@@ -124,7 +121,7 @@ public abstract class BaseShape
     }
 }
 
-// РЕАЛИЗАЦИИ ФИГУР
+// РЕАЛИЗАЦИИ ФИГУР (Rectangle, Triangle, Trapezoid, Pentagon — без изменений)
 public class MyRectangle : BaseShape {
     public double Width { get; set; } = 150; public double Height { get; set; } = 100;
     public override Point[] GetVertices() => new[] {
@@ -176,7 +173,11 @@ public class MyCircle : BaseShape {
     };
     public override void Draw(DrawingContext context) {
         if (FillColor != null) context.DrawEllipse(new SolidColorBrush(FillColor.Value), null, Center, Radius, Radius);
-        context.DrawEllipse(null, new Pen(SideColors[0].ToUInt32(), Thicknesses[0]), Center, Radius, Radius);
+        
+        // ИСПРАВЛЕНО: ToUInt32() заменен на создание SolidColorBrush
+        var strokeBrush = new SolidColorBrush(SideColors[0]);
+        context.DrawEllipse(null, new Pen(strokeBrush, Thicknesses[0]), Center, Radius, Radius);
+        
         if (IsSelected) context.DrawEllipse(Brushes.Orange, new Pen(Brushes.White, 2), Anchor, 7, 7);
     }
     public override bool IsHit(Point p) => Math.Sqrt(Math.Pow(p.X - Center.X, 2) + Math.Pow(p.Y - Center.Y, 2)) <= Radius;
