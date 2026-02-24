@@ -113,14 +113,25 @@ public partial class MainWindow : Window
     }
 
     private void OnUp(object? s, PointerReleasedEventArgs e) {
-        if (_selectedShape != null && !_isDragging && !_isDraggingAnchor) {
-            int idx = _selectedShape.GetSideIndex(e.GetPosition(MyCanvas));
-            if (idx != -1 && CurrentColorDisplay.Fill is ISolidColorBrush brush) {
+    if (_selectedShape != null && !_isDragging && !_isDraggingAnchor) {
+        var pos = e.GetPosition(MyCanvas);
+        int idx = _selectedShape.GetSideIndex(pos);
+        
+        if (idx != -1) {
+            // 1. Обновляем цвет стороны
+            if (CurrentColorDisplay.Fill is ISolidColorBrush brush) {
                 _selectedShape.SideColors[idx] = brush.Color;
-                MyCanvas.InvalidateVisual();
             }
+            
+            // 2. ОБНОВЛЯЕМ ТОЛЩИНУ СТОРОНЫ (Ваше исправление)
+            _selectedShape.Thicknesses[idx] = (double)(ThicknessControl.Value ?? 2);
+            
+            MyCanvas.InvalidateVisual();
         }
-        _selectedShape = null; _isDragging = false; _isDraggingAnchor = false;
-        e.Pointer.Capture(null);
     }
+    _selectedShape = null; 
+    _isDragging = false; 
+    _isDraggingAnchor = false;
+    e.Pointer.Capture(null);
+}
 }

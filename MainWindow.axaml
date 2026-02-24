@@ -33,11 +33,21 @@
                 <TextBlock x:Name="TxtTopDist" Text="До верхней границы: 0" Foreground="#AAAAAA" FontSize="11"/>
                 <TextBlock x:Name="TxtBottomDist" Text="До нижней границы: 0" Foreground="#AAAAAA" FontSize="11"/>
 
-                <TextBlock Text="Координаты (X, Y):" Foreground="White" Margin="0,5,0,0"/>
-                <StackPanel Orientation="Horizontal" Spacing="5">
-                    <NumericUpDown x:Name="CoordX" Value="0" Width="100" ValueChanged="OnCoordChanged"/>
-                    <NumericUpDown x:Name="CoordY" Value="0" Width="100" ValueChanged="OnCoordChanged"/>
-                </StackPanel>
+                <TextBlock Text="Координаты (X, Y):" Foreground="White" Margin="0,15,0,5"/>
+<StackPanel Orientation="Vertical" Spacing="10">
+    <NumericUpDown x:Name="CoordX" 
+                   Value="0" 
+                   Height="45" 
+                   FontSize="18"
+                   VerticalContentAlignment="Center"
+                   ValueChanged="OnCoordChanged"/>
+    <NumericUpDown x:Name="CoordY" 
+                   Value="0" 
+                   Height="45" 
+                   FontSize="18"
+                   VerticalContentAlignment="Center"
+                   ValueChanged="OnCoordChanged"/>
+</StackPanel>
             </StackPanel>
         </Border>
 

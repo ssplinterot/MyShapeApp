@@ -15,6 +15,9 @@ public abstract class BaseShape
     public Color? FillColor { get; set; } = null;
     public bool IsSelected { get; set; } = false;
 
+    
+    
+
     // --- Ваши новые свойства ---
     public Vector CenterRelativeToAnchor => Center - Anchor;
     public double DistanceTopToAnchor => Anchor.Y - GetVertices().Min(v => v.Y);
@@ -24,6 +27,8 @@ public abstract class BaseShape
     public abstract Point[] GetVertices();
     public abstract void Draw(DrawingContext context);
     public abstract bool IsHit(Point point);
+
+    
 
     public bool IsAnchorHit(Point p) => 
         Math.Sqrt(Math.Pow(p.X - Anchor.X, 2) + Math.Pow(p.Y - Anchor.Y, 2)) < 15;
@@ -66,29 +71,32 @@ public abstract class BaseShape
     }
 
     protected void DrawPolygonWithMiter(DrawingContext context, Point[] vertices)
+{
+    int n = vertices.Length;
+    for (int i = 0; i < n; i++)
     {
-        int n = vertices.Length;
-        for (int i = 0; i < n; i++)
+        int prev = (i + n - 1) % n;
+        int next = (i + 1) % n;
+        int nnext = (i + 2) % n;
+
+        // Берем толщину текущей стороны Thicknesses[i] и соседних для расчета стыков
+        Point outStart = GetOffsetPoint(vertices[prev], vertices[i], vertices[next], Thicknesses[prev], Thicknesses[i], true);
+        Point outEnd = GetOffsetPoint(vertices[i], vertices[next], vertices[nnext], Thicknesses[i], Thicknesses[next], true);
+        Point inStart = GetOffsetPoint(vertices[prev], vertices[i], vertices[next], Thicknesses[prev], Thicknesses[i], false);
+        Point inEnd = GetOffsetPoint(vertices[i], vertices[next], vertices[nnext], Thicknesses[i], Thicknesses[next], false);
+
+        var path = new StreamGeometry();
+        using (var ctx = path.Open())
         {
-            int prev = (i + n - 1) % n;
-            int next = (i + 1) % n;
-            int nnext = (i + 2) % n;
-
-            Point outStart = GetOffsetPoint(vertices[prev], vertices[i], vertices[next], Thicknesses[prev], Thicknesses[i], true);
-            Point outEnd = GetOffsetPoint(vertices[i], vertices[next], vertices[nnext], Thicknesses[i], Thicknesses[next], true);
-            Point inStart = GetOffsetPoint(vertices[prev], vertices[i], vertices[next], Thicknesses[prev], Thicknesses[i], false);
-            Point inEnd = GetOffsetPoint(vertices[i], vertices[next], vertices[nnext], Thicknesses[i], Thicknesses[next], false);
-
-            var path = new StreamGeometry();
-            using (var ctx = path.Open())
-            {
-                ctx.BeginFigure(outStart, true);
-                ctx.LineTo(outEnd); ctx.LineTo(inEnd); ctx.LineTo(inStart);
-                ctx.EndFigure(true);
-            }
-            context.DrawGeometry(new SolidColorBrush(SideColors[i]), null, path);
+            ctx.BeginFigure(outStart, true);
+            ctx.LineTo(outEnd); 
+            ctx.LineTo(inEnd); 
+            ctx.LineTo(inStart);
+            ctx.EndFigure(true);
         }
+        context.DrawGeometry(new SolidColorBrush(SideColors[i]), null, path);
     }
+}
 
     private Point GetOffsetPoint(Point pPrev, Point pCurr, Point pNext, double thickPrev, double thickCurr, bool outer)
     {
