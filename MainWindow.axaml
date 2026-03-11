@@ -2,15 +2,18 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:MyShapeApp"
         x:Class="MyShapeApp.MainWindow"
-        Title="Гео-Редактор" Width="950" Height="700">
+        Title="Гео-Редактор" Width="950" Height="800">
     <DockPanel>
         <Menu DockPanel.Dock="Top">
-            <MenuItem Header="Создать">
+            <MenuItem x:Name="MenuCreate" Header="Создать">
                 <MenuItem Header="Прямоугольник" Click="AddRect"/>
                 <MenuItem Header="Треугольник" Click="AddTriangle"/>
                 <MenuItem Header="Трапеция" Click="AddTrapezoid"/>
                 <MenuItem Header="Круг" Click="AddCircle"/>
                 <MenuItem Header="Пятиугольник" Click="AddPentagon"/>
+            </MenuItem>
+            <MenuItem x:Name="MenuLibrary" Header="Библиотека">
+                <MenuItem Header="Нет сохраненных шаблонов" IsEnabled="False" x:Name="EmptyLibraryItem"/>
             </MenuItem>
         </Menu>
 
@@ -30,37 +33,49 @@
 
                 <Separator Margin="0,10" Background="#555555"/>
                 
+                <TextBlock Text="СОЗДАНИЕ ФИГУР" Foreground="White" FontWeight="Bold"/>
+                <UniformGrid Columns="2" Rows="3" HorizontalAlignment="Stretch">
+                    <ToggleButton x:Name="BtnDrawLine" Content="Рисовать" Background="#444" Foreground="White" Click="OnDrawLineToggle"/>
+                    <Button Content="Отменить" Click="OnCancelDrawClick" Background="#444" Foreground="White"/>
+                    <Button Content="В группу" Click="OnGroupClick" Background="#444" Foreground="White"/>
+                    <Button Content="Разгрупп." Click="OnUngroupClick" Background="#444" Foreground="White"/>
+                    <Button Content="Извлечь" Click="OnExtractClick" Background="#444" Foreground="White"/>
+                </UniformGrid>
+                
+                <TextBlock Text="Подсказка: Зажми Shift при рисовании для прямых линий (шаг 45°). Alt+Клик - выбрать внутри группы." 
+                           Foreground="#888" FontSize="10" TextWrapping="Wrap" Margin="0,5"/>
+
+                <TextBlock Text="ИМЯ И СОХРАНЕНИЕ" Foreground="White" FontWeight="Bold" Margin="0,15,0,5"/>
+                <Grid ColumnDefinitions="*, Auto">
+                    <TextBox x:Name="TxtShapeName" Grid.Column="0" Watermark="Имя фигуры..." 
+                             Height="30" Margin="0,0,5,0" TextChanged="OnShapeNameChanged"/>
+                    <Button Grid.Column="1" Content="В библ." Click="OnSaveToLibraryClick" 
+                            Background="#228B22" Foreground="White" Width="65" HorizontalContentAlignment="Center"/>
+                </Grid>
+
+                <Separator Margin="0,15" Background="#555555"/>
+
                 <TextBlock Text="ДАННЫЕ ЯКОРЯ" Foreground="White" FontWeight="Bold"/>
                 <TextBlock x:Name="TxtRelCenter" Text="Относительно центра: 0, 0" Foreground="#AAAAAA" FontSize="11"/>
                 <TextBlock x:Name="TxtTopDist" Text="До верхней границы: 0" Foreground="#AAAAAA" FontSize="11"/>
                 <TextBlock x:Name="TxtBottomDist" Text="До нижней границы: 0" Foreground="#AAAAAA" FontSize="11"/>
 
                 <TextBlock Text="РАССТОЯНИЯ ОТ УГЛОВ:" Foreground="White" FontWeight="Bold" Margin="0,10,0,0"/>
-        <ScrollViewer Height="80">
-            <TextBlock x:Name="TxtVerticesDist" Text="Нет данных" Foreground="#00FF00" FontSize="11" TextWrapping="Wrap"/>
-        </ScrollViewer>
+                <ScrollViewer Height="80">
+                    <TextBlock x:Name="TxtVerticesDist" Text="Нет данных" Foreground="#00FF00" FontSize="11" TextWrapping="Wrap"/>
+                </ScrollViewer>
 
                 <TextBlock Text="Координаты якоря(X, Y):" Foreground="White" Margin="0,15,0,5"/>
-<StackPanel Orientation="Vertical" Spacing="10">
-    <NumericUpDown x:Name="CoordX" 
-                   Value="0" 
-                   Height="45" 
-                   FontSize="18"
-                   VerticalContentAlignment="Center"
-                   ValueChanged="OnCoordChanged"/>
-    <NumericUpDown x:Name="CoordY" 
-                   Value="0" 
-                   Height="45" 
-                   FontSize="18"
-                   VerticalContentAlignment="Center"
-                   ValueChanged="OnCoordChanged"/>
-</StackPanel>
+                <StackPanel Orientation="Vertical" Spacing="10">
+                    <NumericUpDown x:Name="CoordX" Value="0" Height="45" FontSize="18" VerticalContentAlignment="Center" ValueChanged="OnCoordChanged"/>
+                    <NumericUpDown x:Name="CoordY" Value="0" Height="45" FontSize="18" VerticalContentAlignment="Center" ValueChanged="OnCoordChanged"/>
+                </StackPanel>
             </StackPanel>
         </Border>
+        
 
         <Border Background="White">
-            <local:MyDrawingCanvas x:Name="MyCanvas" 
-                PointerPressed="OnDown" PointerMoved="OnMove" PointerReleased="OnUp"/>
+            <local:MyDrawingCanvas x:Name="MyCanvas" PointerPressed="OnDown" PointerMoved="OnMove" PointerReleased="OnUp"/>
         </Border>
     </DockPanel>
 </Window>
