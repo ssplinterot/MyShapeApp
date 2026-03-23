@@ -3,7 +3,9 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using System;
+using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -51,8 +53,7 @@ public partial class MainWindow : Window
             _isUpdatingCoords = true;
             if (TxtShapeName.Text != _activeShape.ShapeName) TxtShapeName.Text = _activeShape.ShapeName;
 
-            CoordX.Value = (decimal)Math.Round(_activeShape.Anchor.X);
-            CoordY.Value = (decimal)Math.Round(_activeShape.Anchor.Y);
+            
             
             var rel = _activeShape.CenterRelativeToAnchor;
             TxtRelCenter.Text = $"Относительно центра: X:{Math.Round(rel.X)} Y:{Math.Round(rel.Y)}";
@@ -75,8 +76,7 @@ public partial class MainWindow : Window
 
     private void OnCoordChanged(object? sender, NumericUpDownValueChangedEventArgs e) {
         if (!_isUpdatingCoords && _activeShape != null) {
-            _activeShape.Anchor = new Point((double)(CoordX.Value ?? 0), (double)(CoordY.Value ?? 0));
-            MyCanvas.InvalidateVisual();
+           
             UpdateCoordDisplay();
         }
     }
@@ -107,16 +107,13 @@ public partial class MainWindow : Window
         }
     }
 
-    // НОВЫЙ МЕТОД: Рекурсивное перемещение фигуры и всех ее внутренних частей
     private void MoveShapeRecursively(BaseShape shape, Point delta) {
         var oldCenter = shape.Center;
         shape.Center = new Point(oldCenter.X + delta.X, oldCenter.Y + delta.Y);
         shape.Anchor = new Point(shape.Anchor.X + delta.X, shape.Anchor.Y + delta.Y);
         
         if (shape is CompositeShape cs) {
-            foreach (var sub in cs.SubShapes) {
-                MoveShapeRecursively(sub, delta);
-            }
+            foreach (var sub in cs.SubShapes) MoveShapeRecursively(sub, delta);
         }
     }
 
@@ -308,6 +305,87 @@ public partial class MainWindow : Window
             if (_currentParentGroup.SubShapes.Count == 0) MyCanvas.Shapes.Remove(_currentParentGroup);
             _currentParentGroup = null;
             MyCanvas.InvalidateVisual();
+        }
+    }
+
+    private void OnDeleteClick(object? sender, RoutedEventArgs? e) {
+        if (!_multiSelectedShapes.Any() && _activeShape == null) return;
+
+        if (_currentParentGroup != null && _activeShape != null) {
+            _currentParentGroup.SubShapes.Remove(_activeShape);
+            if (_currentParentGroup.SubShapes.Count == 0) MyCanvas.Shapes.Remove(_currentParentGroup);
+        } else {
+            foreach (var shape in _multiSelectedShapes.ToList()) MyCanvas.Shapes.Remove(shape);
+        }
+
+        _multiSelectedShapes.Clear();
+        _activeShape = null; _selectedShape = null; _currentParentGroup = null;
+        
+        UpdateCoordDisplay();
+        MyCanvas.InvalidateVisual();
+    }
+
+    private void OnKeyDown(object? sender, KeyEventArgs e) {
+        if (TxtShapeName.IsFocused) return;
+        if (e.Key == Key.Back || e.Key == Key.Delete) OnDeleteClick(null, null);
+    }
+
+    // --- УМНОЕ СОХРАНЕНИЕ / ЗАГРУЗКА ---
+   // --- УМНОЕ СОХРАНЕНИЕ / ЗАГРУЗКА ---
+    private async void OnSaveClick(object? sender, RoutedEventArgs e) {
+        var topLevel = TopLevel.GetTopLevel(this);
+        var file = await topLevel!.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {
+            Title = "Сохранить сцену",
+            SuggestedFileName = "scene.txt",
+            DefaultExtension = "txt",
+            FileTypeChoices = new[] { new FilePickerFileType("Текстовые файлы") { Patterns = new[] { "*.txt" } } }
+        });
+        if (file != null) {
+            using var stream = await file.OpenWriteAsync();
+            stream.SetLength(0); // ВАЖНО: удаляем весь мусор от старого файла
+            using var writer = new StreamWriter(stream);
+            writer.WriteLine(MyCanvas.Shapes.Count);
+            foreach (var shape in MyCanvas.Shapes) shape.SaveToStream(writer);
+            TxtShapeName.Text = "Сцена сохранена!";
+        }
+    }
+
+    private async void OnLoadClick(object? sender, RoutedEventArgs e) {
+        var topLevel = TopLevel.GetTopLevel(this);
+        var files = await topLevel!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions {
+            Title = "Загрузить сцену",
+            AllowMultiple = false,
+            // ИСПРАВЛЕНИЕ: Здесь используем FileTypeFilter
+            FileTypeFilter = new[] { new FilePickerFileType("Текстовые файлы") { Patterns = new[] { "*.txt" } } }
+        });
+        if (files.Count >= 1) {
+            try {
+                using var stream = await files[0].OpenReadAsync();
+                using var reader = new StreamReader(stream);
+                
+                string? firstLine = reader.ReadLine();
+                if (string.IsNullOrWhiteSpace(firstLine)) throw new Exception("Файл пуст!");
+                
+                int count = int.Parse(firstLine);
+                
+                MyCanvas.Shapes.Clear();
+                _multiSelectedShapes.Clear();
+                _activeShape = null; _selectedShape = null; _currentParentGroup = null;
+
+                for (int i = 0; i < count; i++) {
+                    string typeName = reader.ReadLine()!;
+                    BaseShape shape = BaseShape.CreateShape(typeName); 
+                    shape.LoadFromStream(reader);                      
+                    MyCanvas.Shapes.Add(shape);
+                }
+                UpdateCoordDisplay();
+                MyCanvas.InvalidateVisual();
+                TxtShapeName.Text = "Сцена загружена!";
+            } 
+            catch (Exception ex) {
+                TxtShapeName.Text = "Ошибка загрузки!"; 
+                Console.WriteLine(ex.Message);
+            }
         }
     }
 

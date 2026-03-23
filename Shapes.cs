@@ -3,6 +3,8 @@ using Avalonia.Media;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
+using System.Globalization;
 
 namespace MyShapeApp;
 
@@ -25,6 +27,52 @@ public abstract class BaseShape
     public abstract Point[] GetVertices();
     public abstract void Draw(DrawingContext context);
     public abstract bool IsHit(Point point);
+
+    // --- СЕРИАЛИЗАЦИЯ: Базовая реализация ---
+    public virtual void SaveToStream(StreamWriter writer)
+    {
+        writer.WriteLine(GetType().Name); // Имя класса
+        writer.WriteLine(ShapeName);
+        writer.WriteLine($"{Center.X.ToString(CultureInfo.InvariantCulture)};{Center.Y.ToString(CultureInfo.InvariantCulture)}");
+        writer.WriteLine($"{Anchor.X.ToString(CultureInfo.InvariantCulture)};{Anchor.Y.ToString(CultureInfo.InvariantCulture)}");
+        writer.WriteLine(FillColor?.ToString() ?? "null");
+        writer.WriteLine(string.Join(";", SideColors.Select(c => c.ToString())));
+        writer.WriteLine(string.Join(";", Thicknesses.Select(t => t.ToString(CultureInfo.InvariantCulture))));
+    }
+
+    public virtual void LoadFromStream(StreamReader reader)
+    {
+        ShapeName = reader.ReadLine()!;
+        var c = reader.ReadLine()!.Split(';'); 
+        Center = new Point(double.Parse(c[0], CultureInfo.InvariantCulture), double.Parse(c[1], CultureInfo.InvariantCulture));
+        
+        var a = reader.ReadLine()!.Split(';'); 
+        Anchor = new Point(double.Parse(a[0], CultureInfo.InvariantCulture), double.Parse(a[1], CultureInfo.InvariantCulture));
+        
+        string fill = reader.ReadLine()!;
+        FillColor = fill == "null" ? null : Color.Parse(fill);
+        
+        SideColors.Clear();
+        string sc = reader.ReadLine()!;
+        if (!string.IsNullOrEmpty(sc)) SideColors.AddRange(sc.Split(';').Select(Color.Parse));
+        
+        Thicknesses.Clear();
+        string th = reader.ReadLine()!;
+        if (!string.IsNullOrEmpty(th)) Thicknesses.AddRange(th.Split(';').Select(s => double.Parse(s, CultureInfo.InvariantCulture)));
+    }
+
+    // ФАБРИКА: Создает нужный объект по имени из текстового файла
+    public static BaseShape CreateShape(string typeName) => typeName.Trim() switch {
+        "MyRectangle" => new MyRectangle(),
+        "MyTriangle" => new MyTriangle(),
+        "MyTrapezoid" => new MyTrapezoid(),
+        "MyCircle" => new MyCircle(),
+        "MyPentagon" => new MyPentagon(),
+        "CustomPolygon" => new CustomPolygon(),
+        "CompositeShape" => new CompositeShape(),
+        _ => throw new Exception($"Неизвестный тип фигуры: {typeName}")
+    };
+    // ----------------------------------------
 
     public bool IsAnchorHit(Point p) => Math.Sqrt(Math.Pow(p.X - Anchor.X, 2) + Math.Pow(p.Y - Anchor.Y, 2)) < 15;
 
@@ -148,6 +196,18 @@ public abstract class BaseShape
 
 public class MyRectangle : BaseShape {
     public double Width { get; set; } = 150; public double Height { get; set; } = 100;
+    
+    public override void SaveToStream(StreamWriter writer) {
+        base.SaveToStream(writer);
+        writer.WriteLine(Width.ToString(CultureInfo.InvariantCulture));
+        writer.WriteLine(Height.ToString(CultureInfo.InvariantCulture));
+    }
+    public override void LoadFromStream(StreamReader reader) {
+        base.LoadFromStream(reader);
+        Width = double.Parse(reader.ReadLine()!, CultureInfo.InvariantCulture);
+        Height = double.Parse(reader.ReadLine()!, CultureInfo.InvariantCulture);
+    }
+    
     public override Point[] GetVertices() => new[] {
         new Point(Center.X - Width/2, Center.Y - Height/2), new Point(Center.X + Width/2, Center.Y - Height/2),
         new Point(Center.X + Width/2, Center.Y + Height/2), new Point(Center.X - Width/2, Center.Y + Height/2)
@@ -158,6 +218,18 @@ public class MyRectangle : BaseShape {
 
 public class MyTriangle : BaseShape {
     public double Width { get; set; } = 150; public double Height { get; set; } = 100;
+    
+    public override void SaveToStream(StreamWriter writer) {
+        base.SaveToStream(writer);
+        writer.WriteLine(Width.ToString(CultureInfo.InvariantCulture));
+        writer.WriteLine(Height.ToString(CultureInfo.InvariantCulture));
+    }
+    public override void LoadFromStream(StreamReader reader) {
+        base.LoadFromStream(reader);
+        Width = double.Parse(reader.ReadLine()!, CultureInfo.InvariantCulture);
+        Height = double.Parse(reader.ReadLine()!, CultureInfo.InvariantCulture);
+    }
+    
     public override Point[] GetVertices() => new[] {
         new Point(Center.X, Center.Y - Height/2), new Point(Center.X + Width/2, Center.Y + Height/2), new Point(Center.X - Width/2, Center.Y + Height/2)
     };
@@ -167,6 +239,18 @@ public class MyTriangle : BaseShape {
 
 public class MyTrapezoid : BaseShape {
     public double Width { get; set; } = 200; public double Height { get; set; } = 100;
+    
+    public override void SaveToStream(StreamWriter writer) {
+        base.SaveToStream(writer);
+        writer.WriteLine(Width.ToString(CultureInfo.InvariantCulture));
+        writer.WriteLine(Height.ToString(CultureInfo.InvariantCulture));
+    }
+    public override void LoadFromStream(StreamReader reader) {
+        base.LoadFromStream(reader);
+        Width = double.Parse(reader.ReadLine()!, CultureInfo.InvariantCulture);
+        Height = double.Parse(reader.ReadLine()!, CultureInfo.InvariantCulture);
+    }
+    
     public override Point[] GetVertices() => new[] {
         new Point(Center.X - Width * 0.3, Center.Y - Height/2), new Point(Center.X + Width * 0.3, Center.Y - Height/2),
         new Point(Center.X + Width/2, Center.Y + Height/2), new Point(Center.X - Width/2, Center.Y + Height/2)
@@ -177,6 +261,16 @@ public class MyTrapezoid : BaseShape {
 
 public class MyPentagon : BaseShape {
     public double Radius { get; set; } = 80;
+    
+    public override void SaveToStream(StreamWriter writer) {
+        base.SaveToStream(writer);
+        writer.WriteLine(Radius.ToString(CultureInfo.InvariantCulture));
+    }
+    public override void LoadFromStream(StreamReader reader) {
+        base.LoadFromStream(reader);
+        Radius = double.Parse(reader.ReadLine()!, CultureInfo.InvariantCulture);
+    }
+
     public override Point[] GetVertices() {
         Point[] pts = new Point[5];
         for (int i = 0; i < 5; i++) {
@@ -191,6 +285,16 @@ public class MyPentagon : BaseShape {
 
 public class MyCircle : BaseShape {
     public double Radius { get; set; } = 60;
+    
+    public override void SaveToStream(StreamWriter writer) {
+        base.SaveToStream(writer);
+        writer.WriteLine(Radius.ToString(CultureInfo.InvariantCulture));
+    }
+    public override void LoadFromStream(StreamReader reader) {
+        base.LoadFromStream(reader);
+        Radius = double.Parse(reader.ReadLine()!, CultureInfo.InvariantCulture);
+    }
+
     public override Point[] GetVertices() => new[] {
         new Point(Center.X - Radius, Center.Y - Radius), new Point(Center.X + Radius, Center.Y - Radius),
         new Point(Center.X + Radius, Center.Y + Radius), new Point(Center.X - Radius, Center.Y + Radius)
@@ -207,12 +311,9 @@ public class MyCircle : BaseShape {
     }
     public override void Draw(DrawingContext context) {
         if (FillColor != null) context.DrawEllipse(new SolidColorBrush(FillColor.Value), null, Center, Radius, Radius);
-        
-        // ЗАЩИТА ОТ КРАША: Проверяем, есть ли цвета, прежде чем их брать!
         var strokeBrush = new SolidColorBrush(SideColors.Count > 0 ? SideColors[0] : Colors.Black);
         var thick = Thicknesses.Count > 0 ? Thicknesses[0] : 2;
         context.DrawEllipse(null, new Pen(strokeBrush, thick), Center, Radius, Radius);
-        
         DrawSelectionEffects(context, GetVertices());
     }
     public override bool IsHit(Point p) => Math.Sqrt(Math.Pow(p.X - Center.X, 2) + Math.Pow(p.Y - Center.Y, 2)) <= Radius;
@@ -221,6 +322,22 @@ public class MyCircle : BaseShape {
 public class CustomPolygon : BaseShape
 {
     public List<Point> RelativePoints { get; set; } = new();
+
+    public override void SaveToStream(StreamWriter writer) {
+        base.SaveToStream(writer);
+        writer.WriteLine(RelativePoints.Count);
+        foreach(var p in RelativePoints) writer.WriteLine($"{p.X.ToString(CultureInfo.InvariantCulture)};{p.Y.ToString(CultureInfo.InvariantCulture)}");
+    }
+    
+    public override void LoadFromStream(StreamReader reader) {
+        base.LoadFromStream(reader);
+        int count = int.Parse(reader.ReadLine()!);
+        RelativePoints.Clear();
+        for(int i = 0; i < count; i++) {
+            var pts = reader.ReadLine()!.Split(';');
+            RelativePoints.Add(new Point(double.Parse(pts[0], CultureInfo.InvariantCulture), double.Parse(pts[1], CultureInfo.InvariantCulture)));
+        }
+    }
 
     public override Point[] GetVertices() => RelativePoints.Select(p => new Point(Center.X + p.X, Center.Y + p.Y)).ToArray();
 
@@ -250,11 +367,31 @@ public class CustomPolygon : BaseShape
 
 public class CompositeShape : BaseShape
 {
-    public List<BaseShape> SubShapes { get; set; } = new();
+    public ShapeArray SubShapes { get; set; } = new();
+
+    public override void SaveToStream(StreamWriter writer) {
+        base.SaveToStream(writer);
+        writer.WriteLine(SubShapes.Count);
+        foreach(var s in SubShapes) {
+            s.SaveToStream(writer); 
+        }
+    }
+    
+    public override void LoadFromStream(StreamReader reader) {
+        base.LoadFromStream(reader);
+        int count = int.Parse(reader.ReadLine()!);
+        SubShapes.Clear();
+        for(int i = 0; i < count; i++) {
+            string typeName = reader.ReadLine()!; 
+            BaseShape shape = CreateShape(typeName);
+            shape.LoadFromStream(reader);
+            SubShapes.Add(shape);
+        }
+    }
 
     public override Rect GetVisualBounds()
     {
-        if (!SubShapes.Any()) return new Rect();
+        if (SubShapes.Count == 0) return new Rect();
         double minX = double.MaxValue, minY = double.MaxValue, maxX = double.MinValue, maxY = double.MinValue;
         foreach (var sub in SubShapes) {
             var b = sub.GetVisualBounds();
@@ -276,5 +413,9 @@ public class CompositeShape : BaseShape
         DrawSelectionEffects(context, GetVertices());
     }
 
-    public override bool IsHit(Point p) => SubShapes.Any(s => s.IsHit(p));
+    public override bool IsHit(Point p)
+    {
+        foreach (var s in SubShapes) if (s.IsHit(p)) return true;
+        return false;
+    }
 }

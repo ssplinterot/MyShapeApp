@@ -71,3 +71,4 @@
 /Users/margo/GeometryEditor/MyShapeApp/obj/Debug/net10.0/MyShapeApp.csproj.Up2Date
 /Users/margo/GeometryEditor/MyShapeApp/obj/Debug/net10.0/MyShapeApp.genruntimeconfig.cache
 /Users/margo/GeometryEditor/MyShapeApp/obj/Debug/net10.0/ref/MyShapeApp.dll
+/Users/margo/GeometryEditor/MyShapeApp/obj/Debug/net10.0/MyShapeApp.sourcelink.json
