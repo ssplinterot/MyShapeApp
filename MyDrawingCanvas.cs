@@ -2,63 +2,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace MyShapeApp;
 
-// НОВЫЙ КЛАСС: Собственная реализация массива с функцией сдвига
-public class ShapeArray : IEnumerable<BaseShape>
-{
-    private BaseShape[] _items = new BaseShape[1000]; // Массив на 1000 элементов
-    public int Count { get; private set; } = 0;
-
-    public void Add(BaseShape item)
-    {
-        if (Count < _items.Length)
-        {
-            _items[Count] = item; // Добавление в конец
-            Count++;
-        }
-    }
-
-    public void Remove(BaseShape item)
-    {
-        int index = Array.IndexOf(_items, item, 0, Count);
-        if (index != -1)
-        {
-            // Процедура сдвига элементов влево, чтобы не было "пустых дыр"
-            for (int i = index; i < Count - 1; i++)
-            {
-                _items[i] = _items[i + 1];
-            }
-            _items[Count - 1] = null!; // Зачищаем последний элемент
-            Count--;
-        }
-    }
-
-    public void Clear()
-    {
-        Array.Clear(_items, 0, Count);
-        Count = 0;
-    }
-
-    public BaseShape this[int index]
-    {
-        get => _items[index];
-        set => _items[index] = value;
-    }
-
-    public IEnumerator<BaseShape> GetEnumerator()
-    {
-        for (int i = 0; i < Count; i++) yield return _items[i];
-    }
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-}
-
 public class MyDrawingCanvas : Control 
 {
-    // Заменили стандартный List на наш массив
     public ShapeArray Shapes { get; set; } = new ShapeArray();
     public List<Point> TempPolylinePts { get; set; } = new List<Point>();
     public Point? PreviewPoint { get; set; }
@@ -67,7 +16,6 @@ public class MyDrawingCanvas : Control
     {
         context.DrawRectangle(Brushes.White, null, new Rect(0, 0, Bounds.Width, Bounds.Height));
         
-        // Процедура отображения: цикл пройдет только по заполненным элементам массива
         foreach (var shape in Shapes) shape.Draw(context);
 
         if (TempPolylinePts.Count > 0)
